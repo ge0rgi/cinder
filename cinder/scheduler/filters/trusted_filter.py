@@ -14,6 +14,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#    ge0rgi: Adapted Nova Trusted Filter to work for cinder volumes
 
 """
 Filter to add support for Trusted Computing Pools (EXPERIMENTAL).
@@ -34,10 +35,9 @@ from oslo_utils import timeutils
 from oslo_config import cfg
 import requests
 
-from cinder import context
 from cinder.i18n import _LW
-from cinder import objects
 from cinder.scheduler import filters
+
 
 LOG = logging.getLogger(__name__)
 CONF = cfg.CONF
@@ -125,16 +125,7 @@ class ComputeAttestationCache(object):
 
     def __init__(self):
         self.attestservice = AttestationService()
-        self.compute_nodes = {}
-        admin = context.get_admin_context()
-
-        # Fetch compute node list to initialize the compute_nodes,
-        # so that we don't need poll OAT service one by one for each
-        # host in the first round that scheduler invokes us.
-        computes = objects.ComputeNodeList.get_all(admin)
-        for compute in computes:
-            host = compute.hypervisor_hostname
-            self._init_cache_entry(host)
+        self.storage_nodes = {}
 
         # TODO(sfinucan): Remove this warning when the named config options
         # gains a 'min' parameter.
@@ -146,8 +137,8 @@ class ComputeAttestationCache(object):
 
     def _cache_valid(self, host):
         cachevalid = False
-        if host in self.compute_nodes:
-            node_stats = self.compute_nodes.get(host)
+        if host in self.storage_nodes:
+            node_stats = self.storage_nodes.get(host)
             if not timeutils.is_older_than(
                              node_stats['vtime'],
                              CONF.trusted_computing.attestation_auth_timeout):
@@ -155,13 +146,13 @@ class ComputeAttestationCache(object):
         return cachevalid
 
     def _init_cache_entry(self, host):
-        self.compute_nodes[host] = {
+        self.storage_nodes[host] = {
             'trust_lvl': 'unknown',
             'vtime': timeutils.normalize_time(
                         timeutils.parse_isotime("1970-01-01T00:00:00Z"))}
 
     def _invalidate_caches(self):
-        for host in self.compute_nodes:
+        for host in self.storage_nodes:
             self._init_cache_entry(host)
 
     def _update_cache_entry(self, state):
@@ -186,12 +177,12 @@ class ComputeAttestationCache(object):
                 entry['trust_lvl'] = 'unknown'
                 entry['vtime'] = timeutils.utcnow()
 
-        self.compute_nodes[host] = entry
+        self.storage_nodes[host] = entry
 
     def _update_cache(self):
         self._invalidate_caches()
         states = self.attestservice.do_attestation(
-            list(self.compute_nodes.keys()))
+            list(self.storage_nodes.keys()))
         if states is None:
             return
         for state in states:
@@ -199,11 +190,11 @@ class ComputeAttestationCache(object):
 
     def get_host_attestation(self, host):
         """Check host's trust level."""
-        if host not in self.compute_nodes:
+        if host not in self.storage_nodes:
             self._init_cache_entry(host)
         if not self._cache_valid(host):
             self._update_cache()
-        level = self.compute_nodes.get(host).get('trust_lvl')
+        level = self.storage_nodes.get(host).get('trust_lvl')
         return level
 
 
@@ -217,7 +208,12 @@ class ComputeAttestation(object):
 
 
 class TrustedFilter(filters.BaseBackendFilter):
+    def __init__(self):
+        self.compute_attestation = ComputeAttestation()
 
     def backend_passes(self, host_state, filter_properties):
-        return  True
+        hostname = host_state.host.split('@')[0]
+        if 'trust:trusted_host' in filter_properties["metadata"]:
+            return self.compute_attestation.is_trusted(hostname, filter_properties['metadata']['trust:trusted_host'])
+        return self.compute_attestation.is_trusted(hostname, CONF.trusted_computing.default_trust_level)
 
