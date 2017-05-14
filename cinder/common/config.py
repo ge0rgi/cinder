@@ -3,6 +3,7 @@
 # All Rights Reserved.
 # Copyright 2012 Red Hat, Inc.
 # Copyright 2013 NTT corp.
+#Copyright 2017 Georgi Georgiev.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -15,6 +16,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#    ge0rgi: Added trusted_computing section
 
 """Command-line flag library.
 
@@ -31,6 +33,7 @@ from oslo_config import cfg
 from oslo_log import log as logging
 from oslo_middleware import cors
 from oslo_utils import netutils
+from cinder.common import scheduler_config
 
 
 CONF = cfg.CONF
@@ -195,6 +198,7 @@ global_opts = [
 
 CONF.register_opts(core_opts)
 CONF.register_opts(global_opts)
+scheduler_config.register_opts(CONF)
 
 
 def set_middleware_defaults():
