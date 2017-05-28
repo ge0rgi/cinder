@@ -1,5 +1,6 @@
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
+# Copyright 2017 Georgi Georgiev
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -34,6 +35,7 @@ intact.
 :num_shell_tries:  Number of times to attempt to run commands (default: 3)
 
 """
+#ge0rgi:added is_volume_trusted
 
 
 import requests
@@ -4696,3 +4698,6 @@ class VolumeManager(manager.CleanableManager,
                                                  'attached_mode')
         self._notify_about_volume_usage(context, vref, "detach.end")
         return has_shared_connection
+
+    def is_volume_trusted(self, ctxt, volume_id):
+        pass

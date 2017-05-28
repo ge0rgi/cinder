@@ -10,6 +10,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+# ge0rgi: added trust method
 
 """The volumes V3 api."""
 
@@ -285,6 +287,12 @@ class VolumeController(volumes_v2.VolumeController):
         retval = self._view_builder.detail(req, new_volume)
 
         return retval
+
+    def trust (self, req, **kwargs):
+        context = req.environ['cinder.context']
+        trusted = self.volume_api.is_volume_trusted(context, kwargs["id"])
+        return {"trusted": trusted}
+
 
 
 def create_resource(ext_mgr):

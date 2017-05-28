@@ -1,6 +1,7 @@
 # Copyright 2011 OpenStack Foundation
 # Copyright 2011 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
+# Copyright 2017 Georgi Georgiev
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -14,6 +15,7 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#   ge0rgi: added GET /volumes/{id}/trust
 
 """
 WSGI middleware for OpenStack Volume API.
@@ -58,7 +60,7 @@ class APIRouter(cinder.api.openstack.APIRouter):
         mapper.resource("volume", "volumes",
                         controller=self.resources['volumes'],
                         collection={'detail': 'GET', 'summary': 'GET'},
-                        member={'action': 'POST'})
+                        member={'action': 'POST', 'trust': 'GET'})
 
         self.resources['messages'] = messages.create_resource(ext_mgr)
         mapper.resource("message", "messages",

@@ -1,5 +1,6 @@
 # Copyright 2010 United States Government as represented by the
 # Administrator of the National Aeronautics and Space Administration.
+# Copyright 2017 Georgi Georgiev
 # All Rights Reserved.
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -15,6 +16,7 @@
 #    under the License.
 
 """Handles all requests relating to volumes."""
+# ge0rgi: added is_volume_trusted
 
 import ast
 import collections
@@ -1998,6 +2000,8 @@ class API(base.Base):
             volume.save()
         return remaining_attachments
 
+    def is_volume_trusted(self, context, volume_id):
+        return self.volume_rpcapi.is_volume_trusted(context, volume_id)
 
 class HostAPI(base.Base):
     """Sub-set of the Volume Manager API for managing host operations."""

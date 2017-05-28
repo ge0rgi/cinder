@@ -1,4 +1,5 @@
 # Copyright 2012, Intel, Inc.
+# Copyright 2017 Georgi Georgiev
 #
 #    Licensed under the Apache License, Version 2.0 (the "License"); you may
 #    not use this file except in compliance with the License. You may obtain
@@ -11,6 +12,8 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
+#
+#   ge0rgi: added is_volume_trusted
 
 
 from cinder.common import constants
@@ -455,3 +458,9 @@ class VolumeAPI(rpc.RPCAPI):
         # cinder.manager.CleanableManager unless in the future we overwrite it
         # in cinder.volume.manager
         cctxt.cast(ctxt, 'do_cleanup', cleanup_request=cleanup_request)
+
+    def is_volume_trusted(self, ctxt, volume_id):
+        cctxt = self._get_cctxt()
+        args = {"volume_id": volume_id}
+        return cctxt.call(ctxt, "is_volume_trusted", **args)
+
