@@ -86,6 +86,7 @@ from cinder.volume import group_types
 from cinder.volume import rpcapi as volume_rpcapi
 from cinder.volume import utils as vol_utils
 from cinder.volume import volume_types
+from cinder.scheduler.filters.trusted_filter import ComputeAttestation
 
 LOG = logging.getLogger(__name__)
 
@@ -290,6 +291,10 @@ class VolumeManager(manager.CleanableManager,
             LOG.info(_LI('Image-volume cache disabled for host %(host)s.'),
                      {'host': self.host})
             self.image_volume_cache = None
+        if CONF.trusted_computing:
+            self.compute_attestation = ComputeAttestation()
+
+
 
     def _count_allocated_capacity(self, ctxt, volume):
         pool = vol_utils.extract_host(volume['host'], 'pool')
@@ -4700,4 +4705,9 @@ class VolumeManager(manager.CleanableManager,
         return has_shared_connection
 
     def is_volume_trusted(self, ctxt, volume_id):
-        pass
+        volume = self.db.api.volume_get(ctxt, volume_id)
+        for metadata in volume.volume_metadata:
+            if metadata.key == 'trust:trusted_host':
+               host = volume.host.split("@")[0]
+               return self.compute_attestation.is_trusted(host, metadata.value)
+        return  True
