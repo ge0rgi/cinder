@@ -198,9 +198,10 @@ Related options:
 * attestation_auth_blob
 * attestation_auth_timeout
 """),
-    cfg.StrOpt("default_trust_level", ["trusted", "untrusted", "unknown"], default="trusted", help="""
-    Default trust level for new volumes which does not belong to an instance
-    """),
+    cfg.BoolOpt("create_blank_on_trusted", default=True, help="""
+                                Specifies if blank volumes shoud be created on trusted nodes only"""),
+    cfg.StrOpt("default_asset_tags", default="None", help= """
+    Default asset tags for blank volumes """)
 ]
 
 

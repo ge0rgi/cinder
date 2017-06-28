@@ -86,7 +86,7 @@ from cinder.volume import group_types
 from cinder.volume import rpcapi as volume_rpcapi
 from cinder.volume import utils as vol_utils
 from cinder.volume import volume_types
-from cinder.scheduler.filters.trusted_filter import ComputeAttestation
+from cinder.scheduler.filters.asset_tag_filter import TrustAssertionFilter
 
 LOG = logging.getLogger(__name__)
 
@@ -292,7 +292,7 @@ class VolumeManager(manager.CleanableManager,
                      {'host': self.host})
             self.image_volume_cache = None
         if CONF.trusted_computing:
-            self.compute_attestation = ComputeAttestation()
+            self.asset_tag_filter = TrustAssertionFilter()
 
 
 
@@ -4706,8 +4706,15 @@ class VolumeManager(manager.CleanableManager,
 
     def is_volume_trusted(self, ctxt, volume_id):
         volume = self.db.api.volume_get(ctxt, volume_id)
+        verify_trust = False
+        asset_tags = 'None'
+        host = ''
         for metadata in volume.volume_metadata:
-            if metadata.key == 'trust:trusted_host':
+            if metadata.key == 'trust':
                host = volume.host.split("@")[0]
-               return self.compute_attestation.is_trusted(host, metadata.value)
-        return  True
+               verify_trust = True
+            elif metadata.key == 'asset_tags':
+              asset_tags = metadata.value
+        if verify_trust:
+          return self.asset_tag_filter.is_trusted(host, asset_tags)
+        return None
