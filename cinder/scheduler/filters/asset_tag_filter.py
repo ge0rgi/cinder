@@ -287,7 +287,7 @@ class TrustAssertionFilter(filters.BaseBackendFilter):
             trust, asset_tag = self.verify_and_parse_saml(host_data)
             if not trust:
                 return False
-            if tags is not None:
+            if tags is not None and tags != 'None' and tags!={}:
                 return self.verify_asset_tag(asset_tag, tags)
             return True
         except:
