@@ -196,7 +196,10 @@ class TrustAssertionFilter(filters.BaseBackendFilter):
         # if tag_selections is None or tag_selections == 'Trust':
         if trust_verify == 'true':
             # Get the Tag verification flag from the image properties
-            tag_selections = metadata['asset_tags']  # comma seperated values
+            if 'asset_tags' in metadata:
+                tag_selections = metadata['asset_tags']  # comma seperated values
+            else:
+                tag_selections = 'None'
             LOG.debug(tag_selections)
             verify_trust_status = True
             if tag_selections != None and tag_selections != {} and tag_selections != 'None':
